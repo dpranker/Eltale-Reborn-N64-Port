@@ -3,6 +3,16 @@
 gdb.execute("source tests/gdb/perf_common.py")
 
 
+def bring_back_crowd():
+    """Flag 0x74 hides nine of Melrode's people. Clearing it shows Eltale's code with the full crowd, as a worst case."""
+    addr = FLAGS + 0x74 // 8
+    inferior.write_memory(addr, bytes([inferior.read_memory(addr, 1).tobytes()[0] & ~(1 << (0x74 % 8)) & 0xFF]))
+    clear_scene()
+    warp(0x1A)
+    melrode_street()
+    print(f"AT crowd restored: people={read32(NPC_COUNT)}", flush=True)
+
+
 def walk(name, legs):
     """Each leg is a stick position and a number of frames. Skips the row if a scene or a door interrupted the walk."""
     melrode_street()
@@ -31,6 +41,8 @@ if TARGET == "eltale":
 else:
     new_game()
 clear_scene()
+if os.environ.get("PERF_CROWD"):
+    bring_back_crowd()
 
 walk("walk_street", [((0, -70), 150), ((0, 70), 135)])
 walk("walk_west", [((0, -70), 45), ((-70, 0), 150), ((70, 0), 135)])
