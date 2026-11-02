@@ -17,3 +17,6 @@ __pycache__/
 PLAN.md
 REPORT.md
 CLAUDE.md
+
+# Downloaded tools
+.tools/

@@ -28,7 +28,7 @@ ROM_DIR  := $(BUILD)/rom/$(subst $(comma),-,$(MODS))
 NRM_gameplay := vendor/Eltale-Reborn-DC-Port/eltale/quest64_modern_gameplay.nrm
 NRM_eltale   := vendor/Eltale-Reborn-DC-Port/eltale/eltale_reborn.nrm
 
-.PHONY: phase1 test-phase1 phase2 test-phase2 test-rom-gameplay test-rom-vanilla test-rom-eltale test-phase3 test-phase4 perf-test-roms test-perf test-dl test-late perf-roms rom clean
+.PHONY: phase1 test-phase1 phase2 test-phase2 test-rom-gameplay test-rom-vanilla test-rom-eltale test-phase3 test-phase4 perf-test-roms test-perf test-dl test-late perf-roms cart rom clean
 
 phase1: $(BUILD)/phase1.z64
 
@@ -131,6 +131,16 @@ perf-roms: $(BUILD)/phase2/perf_hud/mod_syms.bin
 	$(PYTHON) tools/build_rom.py --out $(BUILD)/rom/perf-vanilla --name perf-vanilla --mod $(BUILD)/phase2/perf_hud
 	$(PYTHON) tools/build_rom.py --out $(BUILD)/rom/perf-eltale --name perf-eltale --hook-order eltale_reborn,quest64_modern_gameplay,test_perf_hud \
 		--mod $(NRM_gameplay) --mod $(NRM_eltale) --mod $(BUILD)/phase2/perf_hud --sprint-button $(SPRINT)
+
+# Copies the real ROM and both counter ROMs to the SummerCart64's SD card. Keep the console off while this runs.
+SC64        := .tools/sc64/sc64deployer
+CART_DIR    := /N64/Eltale
+CART_ROMS   := gameplay-eltale:eltale perf-eltale:perf-eltale perf-vanilla:perf-vanilla
+
+cart:
+	@$(SC64) sd stat $(CART_DIR) > /dev/null 2>&1 || $(SC64) sd mkdir $(CART_DIR)
+	@for r in $(CART_ROMS); do $(SC64) sd upload $(BUILD)/rom/$${r%%:*}/$${r%%:*}.z64 $(CART_DIR)/$${r##*:}.z64 || exit 1; done
+	@$(SC64) sd ls $(CART_DIR)
 
 rom:
 	$(PYTHON) tools/build_rom.py --out $(ROM_DIR) --name $(subst $(comma),-,$(MODS)) --hook-order $(if $(findstring eltale,$(MODS)),$(if $(findstring gameplay,$(MODS)),eltale_reborn$(comma)quest64_modern_gameplay,eltale_reborn),quest64_modern_gameplay) \
