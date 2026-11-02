@@ -52,6 +52,7 @@ s32 osPiStartDma(OSIoMesg* mb, s32 priority, s32 direction, u32 devAddr, void* v
 void osInvalDCache(void* vAddr, s32 nbytes);
 void osInvalICache(void* vAddr, s32 nbytes);
 void osWritebackDCache(void* vAddr, s32 nbytes);
+void osWritebackDCacheAll(void);
 u32 osSetIntMask(u32 mask);
 
 #endif

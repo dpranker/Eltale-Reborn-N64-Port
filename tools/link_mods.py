@@ -51,6 +51,41 @@ PLAIN_IMPORTS = {
 }
 NATIVE_DEPENDENCY = "."
 
+# Config the N64 build needs to differ from a mod's default. --set still wins. Dialogue would otherwise name
+# Dreamcast buttons.
+N64_CONFIG = {("eltale_reborn", "button_names"): "Nintendo 64"}
+
+# Runtime functions hooked at a game function's entry whenever any mod is linked. Mods build display lists,
+# vertices and textures in their own memory, and the game only writes back its own pool before a graphics task.
+RUNTIME_HOOKS = {"osSpTaskLoad": "rt_before_task"}
+
+# The gameplay mod's sprint needs a real button. Runtime return hooks run after any mod's, so test input counts.
+SPRINT_MOD = "quest64_modern_gameplay"
+SPRINT_BUTTONS = {"L": 0x0020, "R": 0x0010, "Z": 0x2000, "C-UP": 0x0008, "C-DOWN": 0x0004, "C-LEFT": 0x0002, "C-RIGHT": 0x0001}
+DEFAULT_SPRINT_BUTTON = "L"
+
+# RT64's extended opcode. Real F3DEX has no such command, so these become G_NOOP. They only tell RT64 to read
+# memory above 8 MB and to group matrices for interpolation.
+RT64_OP_HALF = 0x6400
+G_NOOP_HALF = 0xC000
+RT64_COMMANDS = (0x6400002C, 0x6400000C)
+RT64_DATA_WORDS = {"eltale_reborn": (0x10786C,)}
+
+# Unrelocated address-like values each mod is known to use, and what to replace them with. A value with no
+# replacement is safe as it is. Any other value fails the build, because it could be a check against the old base.
+ADDRESS_CONSTANTS = {
+    "quest64_modern_gameplay": {
+        # "Below 8 MB" pointer checks. Still true of everything, since the image stays below 8 MB.
+        0x807F0000: None,
+        0x807FFFFF: None,
+    },
+    "eltale_reborn": {
+        # bart_model_build: "is this pointer still in game memory, rather than one of the mod's copies?"
+        0x81000000: 0x80400000,
+        0x80FFFFFF: 0x803FFFFF,
+    },
+}
+
 # Everything that runs before the image is loaded: boot, the loader's own calls and the PI manager's thread.
 BOOT_ROOTS = ("recomp_entrypoint", "func_80000450", "osCreatePiManager", "__osDevMgrMain", "osCreateMesgQueue",
               "osInvalDCache", "osInvalICache", "osWritebackDCache", "osPiStartDma", "osRecvMesg", "osSetIntMask")
@@ -224,6 +259,47 @@ def relocate(mod, base, import_addr, sections_by_vrom):
     return data
 
 
+def apply_fixups(mod, data):
+    """Rewrites what relocations can't: RT64 commands, and constants that assume the old base."""
+    relocated_hi = {r[0] for r in mod.relocs if r[1] == 5}
+    code = ni.code_offsets(mod)
+    known = ADDRESS_CONSTANTS.get(mod.id, {})
+    rt64 = rewritten = 0
+
+    for off in sorted(code):
+        word = struct.unpack_from(">I", data, off)[0]
+        if (word >> 26) != 15 or off in relocated_hi:
+            continue
+        imm = word & 0xFFFF
+        if imm == RT64_OP_HALF:
+            struct.pack_into(">I", data, off, (word & 0xFFFF0000) | G_NOOP_HALF)
+            rt64 += 1
+        elif 0x8040 <= imm <= 0x81FF:
+            value, _ = ni.describe_constant(mod, off)
+            if value not in known:
+                fail(f"{mod.id}: unrelocated constant {value:#x} at {off:#x} isn't known. Work out what it does, "
+                     "then add it to ADDRESS_CONSTANTS.")
+            replacement = known[value]
+            if replacement is None:
+                continue
+            # Only the upper half is here. The lower half of each of these values is the same in the replacement.
+            if value & 0xFFFF != replacement & 0xFFFF:
+                fail(f"{mod.id}: can't replace {value:#x} with {replacement:#x} using only the upper half")
+            struct.pack_into(">I", data, off, (word & 0xFFFF0000) | (replacement >> 16))
+            rewritten += 1
+
+    known_data = RT64_DATA_WORDS.get(mod.id, ())
+    for off in range(0, len(data) & ~3, 4):
+        if off in code or struct.unpack_from(">I", data, off)[0] not in RT64_COMMANDS:
+            continue
+        if off not in known_data:
+            fail(f"{mod.id}: data at {off:#x} looks like an RT64 command but isn't known. Check it, then add it to RT64_DATA_WORDS.")
+        word = struct.unpack_from(">I", data, off)[0]
+        struct.pack_into(">I", data, off, (word & 0x0000FFFF) | (G_NOOP_HALF << 16))
+        rt64 += 1
+    return rt64, rewritten
+
+
 def check_relocation_identity(mod, sections_by_vrom):
     """Relocating to the original address has to change nothing, apart from calls out of the mod.
 
@@ -249,7 +325,7 @@ def config_values(mods, overrides):
         schema = mod.manifest.get("config_schema", {}).get("options", [])
         for option in schema:
             key, kind = option["id"], option["type"]
-            raw = overrides.get((mod.id, key), option["default"])
+            raw = overrides.get((mod.id, key), N64_CONFIG.get((mod.id, key), option["default"]))
             if (mod.id, key) in overrides:
                 used.add((mod.id, key))
             if kind == "Enum":
@@ -279,9 +355,10 @@ def c_string(text):
     return '"' + text.replace("\\", "\\\\").replace('"', '\\"') + '"'
 
 
-def write_runtime_config(out, mods, values):
+def write_runtime_config(out, mods, values, sprint_button):
     (out / "modrt_config.h").write_text(f"""// Generated by tools/link_mods.py.
 #define RT_SMOOTH_TRANSPARENCY {SMOOTH_TRANSPARENCY}
+#define RT_SPRINT_BUTTON {SPRINT_BUTTONS[sprint_button]:#x}
 
 typedef struct {{
     u32 mod;
@@ -437,6 +514,7 @@ def main():
     ap.add_argument("--mod", action="append", default=[])
     ap.add_argument("--hook-order", default=None)
     ap.add_argument("--set", action="append", default=[])
+    ap.add_argument("--sprint-button", default=DEFAULT_SPRINT_BUTTON, choices=sorted(SPRINT_BUTTONS))
     ap.add_argument("--rom", default=str(ROOT / "rom/quest64.us.z64"))
     args = ap.parse_args()
 
@@ -484,7 +562,7 @@ def main():
     runtime_base = align(stub_base + stub_count * 8, 16)
 
     values = config_values(mods, overrides)
-    write_runtime_config(out, mods, values)
+    write_runtime_config(out, mods, values, args.sprint_button)
     runtime, names = build_runtime(out, runtime_base)
     trampoline_base = align(runtime_base + len(runtime), 16)
 
@@ -505,6 +583,16 @@ def main():
         return mods[mod_index].base + mods[mod_index].funcs[func_index][0]
 
     targets = collect_targets(mods, hook_order, func_addr, by_key)
+    if mods:
+        for game_name, runtime_name in RUNTIME_HOOKS.items():
+            func = by_name[game_name]
+            key = (func.section["rom"], func.vram)
+            targets.setdefault(key, {"entry": [], "return": [], "patch": None})["entry"].append(names[runtime_name])
+    if SPRINT_MOD in ids:
+        func = by_name["osContGetReadData"]
+        t = targets.setdefault((func.section["rom"], func.vram), {"entry": [], "return": [], "patch": None})
+        t["entry"].append(names["rt_pads_before_read"])
+        t["return"].append(names["rt_pads_after_read"])
     check_boot_path(targets, by_key, by_name, by_vram, rom)
     code, patches = build_hooks(targets, by_key, rom, trampoline_base, names["rt_hook_frames"])
     end = trampoline_base + len(code) * 4
@@ -514,6 +602,8 @@ def main():
     image = bytearray(end - IMAGE_BASE)
     for mod_index, mod in enumerate(mods):
         linked = relocate(mod, mod.base, lambda i, t=stubs_per_mod[mod_index]: t[i][0], sections_by_vrom)
+        rt64, rewritten = apply_fixups(mod, linked)
+        print(f"link_mods: {mod.id}: {rt64} RT64 commands to G_NOOP, {rewritten} address constants rewritten")
         image[mod.base - IMAGE_BASE:mod.base - IMAGE_BASE + len(linked)] = linked
     struct.pack_into(f">{len(stub_words)}I", image, stub_base - IMAGE_BASE, *stub_words)
     image[runtime_base - IMAGE_BASE:runtime_base - IMAGE_BASE + len(runtime)] = runtime

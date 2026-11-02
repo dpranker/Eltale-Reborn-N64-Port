@@ -30,6 +30,7 @@ def main():
     ap.add_argument("--mod", action="append", default=[])
     ap.add_argument("--hook-order", default=None)
     ap.add_argument("--set", action="append", default=[])
+    ap.add_argument("--sprint-button", default=None)
     ap.add_argument("--rom", default=str(ROOT / "rom/quest64.us.z64"))
     args = ap.parse_args()
 
@@ -43,6 +44,8 @@ def main():
         link += ["--hook-order", args.hook_order]
     for item in args.set:
         link += ["--set", item]
+    if args.sprint_button:
+        link += ["--sprint-button", args.sprint_button]
     run(*link)
 
     size = (out / "image.bin").stat().st_size

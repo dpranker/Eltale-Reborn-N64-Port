@@ -104,6 +104,37 @@ void rt_printf(const char* format) {
     rt_printf_last = format;
 }
 
+// Runs before every RSP task. See RUNTIME_HOOKS in tools/link_mods.py.
+void rt_before_task(void) {
+    osWritebackDCacheAll();
+}
+
+// The gameplay mod's sprint reads button bit 0x40, which no N64 button sets. Pressing the mapped button also
+// sets that bit. The pad pointer only has to last until the same call returns.
+#define SPRINT_BIT 0x0040
+#define PAD_COUNT 4
+
+typedef struct {
+    u16 button;
+    s8 stick_x;
+    s8 stick_y;
+    u8 errnum;
+} ContPad;
+
+static ContPad* sPads;
+
+void rt_pads_before_read(ContPad* pads) {
+    sPads = pads;
+}
+
+void rt_pads_after_read(void) {
+    for (s32 i = 0; i < PAD_COUNT; i++) {
+        if (sPads[i].button & RT_SPRINT_BUTTON) {
+            sPads[i].button |= SPRINT_BIT;
+        }
+    }
+}
+
 // Native libraries, such as Eltale's ambient sound, don't exist here.
 u32 rt_native_stub(void) {
     return 0;

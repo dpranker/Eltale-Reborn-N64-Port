@@ -20,14 +20,15 @@ LOADER_MAGIC_ADDR := 0x807FFFF0
 
 # `make rom MODS=gameplay,eltale` writes build/rom/<mods>.z64. Eltale's hooks run first in a chain, as on PC
 # and the Dreamcast port, whichever order the mods sit in memory.
+comma    := ,
 MODS     ?= gameplay,eltale
 SETTINGS ?=
+SPRINT   ?= L
 ROM_DIR  := $(BUILD)/rom/$(subst $(comma),-,$(MODS))
-comma    := ,
 NRM_gameplay := vendor/Eltale-Reborn-DC-Port/eltale/quest64_modern_gameplay.nrm
 NRM_eltale   := vendor/Eltale-Reborn-DC-Port/eltale/eltale_reborn.nrm
 
-.PHONY: phase1 test-phase1 phase2 test-phase2 rom clean
+.PHONY: phase1 test-phase1 phase2 test-phase2 test-rom-gameplay test-rom-vanilla test-phase3 rom clean
 
 phase1: $(BUILD)/phase1.z64
 
@@ -89,9 +90,20 @@ test-phase2: phase2 phase1 $(BUILD)/phase1_syms.gdb $(BUILD)/vanilla.z64
 	$(PYTHON) tests/test_link_reject.py
 	tests/run_phase2.sh
 
+# The gameplay mod with test-only controller input, for the gdb scripts. Not for release.
+test-rom-gameplay: $(BUILD)/phase2/input/mod_syms.bin
+	$(PYTHON) tools/build_rom.py --out $(BUILD)/rom/gameplay-test --name gameplay-test --mod $(NRM_gameplay) --mod $(BUILD)/phase2/input \
+		--sprint-button $(SPRINT) $(foreach s,$(SETTINGS),--set $(s))
+
+test-rom-vanilla: $(BUILD)/phase2/input/mod_syms.bin
+	$(PYTHON) tools/build_rom.py --out $(BUILD)/rom/vanilla-test --name vanilla-test --mod $(BUILD)/phase2/input
+
+test-phase3: test-rom-vanilla test-rom-gameplay
+	tests/run_phase3.sh
+
 rom:
 	$(PYTHON) tools/build_rom.py --out $(ROM_DIR) --name $(subst $(comma),-,$(MODS)) --hook-order $(if $(findstring eltale,$(MODS)),$(if $(findstring gameplay,$(MODS)),eltale_reborn$(comma)quest64_modern_gameplay,eltale_reborn),quest64_modern_gameplay) \
-		$(foreach m,$(subst $(comma), ,$(MODS)),--mod $(NRM_$(m))) $(foreach s,$(SETTINGS),--set $(s))
+		--sprint-button $(SPRINT) $(foreach m,$(subst $(comma), ,$(MODS)),--mod $(NRM_$(m))) $(foreach s,$(SETTINGS),--set $(s))
 
 clean:
 	rm -rf $(BUILD)
