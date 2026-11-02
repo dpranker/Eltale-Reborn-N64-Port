@@ -28,7 +28,7 @@ ROM_DIR  := $(BUILD)/rom/$(subst $(comma),-,$(MODS))
 NRM_gameplay := vendor/Eltale-Reborn-DC-Port/eltale/quest64_modern_gameplay.nrm
 NRM_eltale   := vendor/Eltale-Reborn-DC-Port/eltale/eltale_reborn.nrm
 
-.PHONY: phase1 test-phase1 phase2 test-phase2 test-rom-gameplay test-rom-vanilla test-rom-eltale test-phase3 test-phase4 perf-test-roms test-perf perf-roms rom clean
+.PHONY: phase1 test-phase1 phase2 test-phase2 test-rom-gameplay test-rom-vanilla test-rom-eltale test-phase3 test-phase4 perf-test-roms test-perf test-dl perf-roms rom clean
 
 phase1: $(BUILD)/phase1.z64
 
@@ -117,6 +117,10 @@ perf-test-roms: $(BUILD)/phase2/input/mod_syms.bin $(BUILD)/phase2/perf/mod_syms
 
 test-perf: perf-test-roms
 	tests/run_perf.sh
+
+# Checks real frames' display lists against what the hardware accepts, and estimates their pixel work.
+test-dl: perf-test-roms
+	tests/run_dl_check.sh
 
 # Playable ROMs with the frame counter on screen, for consoles with no gdb. Not for release.
 perf-roms: $(BUILD)/phase2/perf_hud/mod_syms.bin
