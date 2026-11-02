@@ -1,0 +1,61 @@
+# Builds from the vanilla ROM to a patched ROM. See PLAN.md for the phases.
+
+ROM      := rom/quest64.us.z64
+BUILD    := build
+DUMP     := vendor/Eltale-Reborn/Quest64Syms/dump.toml
+
+CC       := clang
+LD       := ld.lld
+OBJCOPY  := llvm-objcopy
+PYTHON   := python3
+
+# The same flags upstream uses for N64 patches. mips2 keeps registers to 32 bits, as the game expects.
+CFLAGS   := -target mips -mips2 -mabi=32 -O2 -G0 -mno-abicalls -mno-odd-spreg -mno-check-zero-division \
+            -fno-pic -ffreestanding -fno-builtin -fomit-frame-pointer -fno-stack-protector \
+            -ffunction-sections -Wall -Wextra -Werror
+
+LOADER_RAM_ADDR   := 0x80400000
+LOADER_ROM_ADDR   := 0x1000000
+LOADER_MAGIC_ADDR := 0x807FFFF0
+
+.PHONY: phase1 test-phase1 clean
+
+phase1: $(BUILD)/phase1.z64
+
+$(BUILD)/test_blob.bin: tools/gen_test_blob.py
+	@mkdir -p $(BUILD)
+	$(PYTHON) tools/gen_test_blob.py $@
+
+$(BUILD)/game_syms.ld: tools/gen_game_syms.py $(DUMP)
+	@mkdir -p $(BUILD)
+	$(PYTHON) tools/gen_game_syms.py $(DUMP) $@
+
+$(BUILD)/loader_config.h: $(BUILD)/test_blob.bin
+	printf '#define LOADER_ROM_ADDR $(LOADER_ROM_ADDR)\n#define LOADER_RAM_ADDR $(LOADER_RAM_ADDR)\n#define LOADER_MAGIC_ADDR $(LOADER_MAGIC_ADDR)\n#define LOADER_SIZE %d\n' \
+		$$(stat -c %s $<) > $@
+
+$(BUILD)/loader.o: runtime/loader.c runtime/ultra.h $(BUILD)/loader_config.h
+	$(CC) $(CFLAGS) -I$(BUILD) -c $< -o $@
+
+$(BUILD)/stage1.elf: $(BUILD)/loader.o runtime/loader.ld $(BUILD)/game_syms.ld
+	$(LD) -nostdlib -T $(BUILD)/game_syms.ld -T runtime/loader.ld -Map $(BUILD)/stage1.map $< -o $@
+
+$(BUILD)/stage1.bin: $(BUILD)/stage1.elf
+	$(OBJCOPY) -O binary -j .text $< $@
+
+$(BUILD)/phase1.z64: tools/patch_rom.py tools/n64crc.py $(ROM) $(BUILD)/stage1.bin $(BUILD)/test_blob.bin
+	$(PYTHON) tools/patch_rom.py --rom $(ROM) --stage1 $(BUILD)/stage1.bin --blob $(BUILD)/test_blob.bin --out $@
+
+# The stage 1 addresses the gdb tests stop at.
+$(BUILD)/phase1_syms.gdb: $(BUILD)/stage1.elf $(ROM)
+	llvm-nm $< | awk '$$3 == "loader_halted" || $$3 == "loader_boot" { print "set $$" $$3 " = 0x" $$1 }' > $@
+	$(PYTHON) -c "d=open('$(ROM)','rb').read(); print('set \$$title_word = (int)0x'+d[0xDA68F0+0x6D8:0xDA68F0+0x6DC].hex())" >> $@
+
+test-phase1: phase1 $(BUILD)/phase1_syms.gdb $(BUILD)/vanilla.z64
+	tests/run_phase1.sh
+
+$(BUILD)/vanilla.z64: $(ROM)
+	cp $< $@
+
+clean:
+	rm -rf $(BUILD)
