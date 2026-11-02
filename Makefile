@@ -28,7 +28,7 @@ ROM_DIR  := $(BUILD)/rom/$(subst $(comma),-,$(MODS))
 NRM_gameplay := vendor/Eltale-Reborn-DC-Port/eltale/quest64_modern_gameplay.nrm
 NRM_eltale   := vendor/Eltale-Reborn-DC-Port/eltale/eltale_reborn.nrm
 
-.PHONY: phase1 test-phase1 phase2 test-phase2 test-rom-gameplay test-rom-vanilla test-rom-eltale test-phase3 rom clean
+.PHONY: phase1 test-phase1 phase2 test-phase2 test-rom-gameplay test-rom-vanilla test-rom-eltale test-phase3 test-phase4 rom clean
 
 phase1: $(BUILD)/phase1.z64
 
@@ -105,6 +105,9 @@ test-rom-vanilla: $(BUILD)/phase2/input/mod_syms.bin
 
 test-phase3: test-rom-vanilla test-rom-gameplay
 	tests/run_phase3.sh
+
+test-phase4: test-rom-eltale
+	tests/run_phase4.sh
 
 rom:
 	$(PYTHON) tools/build_rom.py --out $(ROM_DIR) --name $(subst $(comma),-,$(MODS)) --hook-order $(if $(findstring eltale,$(MODS)),$(if $(findstring gameplay,$(MODS)),eltale_reborn$(comma)quest64_modern_gameplay,eltale_reborn),quest64_modern_gameplay) \

@@ -23,5 +23,7 @@ until ss -ltn | grep -q ":$port "; do
 done
 timeout --foreground --signal=INT --kill-after=15 "$limit" gdb -q -batch -ex "set \$port = $port" -x "$script"
 status=$?
+# ares only writes save files every few seconds, so let it run before stopping it.
+[ -n "$KEEP_SECONDS" ] && sleep "$KEEP_SECONDS"
 [ "$status" = 124 ] && echo "TIMEOUT after ${limit}s: $script"
 exit "$status"
