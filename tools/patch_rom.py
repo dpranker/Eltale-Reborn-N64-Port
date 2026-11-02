@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """Builds a patched ROM from the vanilla one: appends the blob, installs stage 1, fixes the checksum.
 
-usage: patch_rom.py --rom <vanilla.z64> --stage1 <stage1.bin> --blob <blob.bin> --out <out.z64>
+usage: patch_rom.py --rom <vanilla.z64> --stage1 <stage1.bin> --blob <blob.bin> [--patches <patches.json>] --out <out.z64>
 """
 
 import argparse
 import hashlib
+import json
 import struct
 import sys
 import tomllib
@@ -44,6 +45,7 @@ def main():
     ap.add_argument("--rom", required=True)
     ap.add_argument("--stage1", required=True)
     ap.add_argument("--blob", required=True)
+    ap.add_argument("--patches", default=None)
     ap.add_argument("--out", required=True)
     args = ap.parse_args()
 
@@ -63,6 +65,17 @@ def main():
     if struct.unpack_from(">I", rom, call)[0] != jal(OS_CREATE_PI_MANAGER):
         fail(f"the word at {BOOT_CALL_VRAM:#x} isn't the expected call")
     struct.pack_into(">I", rom, call, jal(STAGE1_VRAM))
+
+    # Hook and patch words from link_mods.py. Each records what it expects to replace.
+    patches = json.loads(Path(args.patches).read_text()) if args.patches else []
+    seen = set()
+    for patch in patches:
+        if patch["rom"] in seen:
+            fail(f"two patches write ROM {patch['rom']:#x} in {patch['func']}")
+        seen.add(patch["rom"])
+        if struct.unpack_from(">I", rom, patch["rom"])[0] != patch["expect"]:
+            fail(f"the word at ROM {patch['rom']:#x} in {patch['func']} isn't what the patch expects")
+        struct.pack_into(">I", rom, patch["rom"], patch["word"])
 
     blob = Path(args.blob).read_bytes()
     if len(rom) != BLOB_ROM_ADDR:

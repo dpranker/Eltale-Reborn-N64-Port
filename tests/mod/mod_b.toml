@@ -1,0 +1,39 @@
+[manifest]
+id = "test_mod_b"
+version = "1.0.0"
+display_name = "Test mod b"
+description = "Phase 2 test mod"
+short_description = "Phase 2 test mod"
+authors = [ "eltale-n64" ]
+game_id = "qs64"
+minimum_recomp_version = "1.0.0"
+dependencies = [ ]
+optional_dependencies = [ ]
+native_libraries = [  ]
+
+[inputs]
+elf_path = "../../build/phase2/mod_b.elf"
+mod_filename = "test_mod_b"
+func_reference_syms_file = "../../vendor/Eltale-Reborn/Quest64Syms/dump.toml"
+data_reference_syms_files = [ "../../vendor/Eltale-Reborn/Quest64Syms/data_dump.toml" ]
+additional_files = [ ]
+
+[[manifest.config_options]]
+id = "sample_number"
+name = "Sample number"
+description = "For the test"
+type = "Number"
+min = 0
+max = 100
+step = 0.25
+precision = 2
+percent = false
+default = 12.5
+
+[[manifest.config_options]]
+id = "sample_enum"
+name = "Sample enum"
+description = "For the test"
+type = "Enum"
+options = [ "First", "Second", "Third" ]
+default = "Second"

@@ -18,7 +18,16 @@ LOADER_RAM_ADDR   := 0x80400000
 LOADER_ROM_ADDR   := 0x1000000
 LOADER_MAGIC_ADDR := 0x807FFFF0
 
-.PHONY: phase1 test-phase1 clean
+# `make rom MODS=gameplay,eltale` writes build/rom/<mods>.z64. Eltale's hooks run first in a chain, as on PC
+# and the Dreamcast port, whichever order the mods sit in memory.
+MODS     ?= gameplay,eltale
+SETTINGS ?=
+ROM_DIR  := $(BUILD)/rom/$(subst $(comma),-,$(MODS))
+comma    := ,
+NRM_gameplay := vendor/Eltale-Reborn-DC-Port/eltale/quest64_modern_gameplay.nrm
+NRM_eltale   := vendor/Eltale-Reborn-DC-Port/eltale/eltale_reborn.nrm
+
+.PHONY: phase1 test-phase1 phase2 test-phase2 rom clean
 
 phase1: $(BUILD)/phase1.z64
 
@@ -56,6 +65,33 @@ test-phase1: phase1 $(BUILD)/phase1_syms.gdb $(BUILD)/vanilla.z64
 
 $(BUILD)/vanilla.z64: $(ROM)
 	cp $< $@
+
+# --- Phase 2: test mods, packaged the way real mods are ---
+
+$(BUILD)/RecompModTool: tools/build_modtool.sh
+	tools/build_modtool.sh $@
+
+MOD_CFLAGS := $(filter-out -Wextra -Werror,$(CFLAGS)) -Wno-return-type -Itests/mod
+
+# RecompModTool writes its files and then fails if zip isn't installed. link_mods.py reads the files.
+$(BUILD)/phase2/%/mod_syms.bin: tests/mod/%.c tests/mod/%.toml tests/mod/modding.h tests/mod/results.h tests/mod/mod.ld $(BUILD)/RecompModTool
+	@mkdir -p $(BUILD)/phase2/$*
+	$(CC) $(MOD_CFLAGS) -c $< -o $(BUILD)/phase2/$*.o
+	$(LD) -nostdlib --unresolved-symbols=ignore-all --emit-relocs -e 0 -T tests/mod/mod.ld -Map $(BUILD)/phase2/$*.map $(BUILD)/phase2/$*.o -o $(BUILD)/phase2/$*.elf
+	-$(BUILD)/RecompModTool tests/mod/$*.toml $(BUILD)/phase2/$*/
+	test -f $@
+
+phase2: $(BUILD)/phase2/mod_a/mod_syms.bin $(BUILD)/phase2/mod_b/mod_syms.bin
+	$(PYTHON) tools/build_rom.py --out $(BUILD)/phase2/rom --name phase2 --mod $(BUILD)/phase2/mod_a --mod $(BUILD)/phase2/mod_b \
+		--set test_mod_a.sample_enum=Third
+
+test-phase2: phase2 phase1 $(BUILD)/phase1_syms.gdb $(BUILD)/vanilla.z64
+	$(PYTHON) tests/test_link_reject.py
+	tests/run_phase2.sh
+
+rom:
+	$(PYTHON) tools/build_rom.py --out $(ROM_DIR) --name $(subst $(comma),-,$(MODS)) --hook-order $(if $(findstring eltale,$(MODS)),$(if $(findstring gameplay,$(MODS)),eltale_reborn$(comma)quest64_modern_gameplay,eltale_reborn),quest64_modern_gameplay) \
+		$(foreach m,$(subst $(comma), ,$(MODS)),--mod $(NRM_$(m))) $(foreach s,$(SETTINGS),--set $(s))
 
 clean:
 	rm -rf $(BUILD)
