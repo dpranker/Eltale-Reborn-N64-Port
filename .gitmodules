@@ -1,0 +1,6 @@
+[submodule "vendor/Eltale-Reborn"]
+	path = vendor/Eltale-Reborn
+	url = https://github.com/billymonks/Eltale-Reborn.git
+[submodule "vendor/Eltale-Reborn-DC-Port"]
+	path = vendor/Eltale-Reborn-DC-Port
+	url = https://github.com/billymonks/Eltale-Reborn-DC-Port.git

@@ -1,0 +1,14 @@
+# ROMs, build output and anything else holding ROM data
+rom/
+build/
+tests/states/
+*.z64
+*.n64
+*.v64
+*.bps
+*.state
+*.pak
+*.eep
+*.sra
+*.fla
+__pycache__/
