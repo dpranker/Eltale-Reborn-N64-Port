@@ -109,8 +109,9 @@ void rt_before_task(void) {
     osWritebackDCacheAll();
 }
 
-// The gameplay mod's sprint reads button bit 0x40, which no N64 button sets. Pressing the mapped button also
-// sets that bit. The pad pointer only has to last until the same call returns.
+// The gameplay mod's sprint reads button bit 0x40, which no N64 button sets. Pressing the mapped button turns
+// sprint on or off, and while it's on that bit stays set. The pad pointer only has to last until the same call
+// returns.
 #define SPRINT_BIT 0x0040
 #define PAD_COUNT 4
 
@@ -122,6 +123,8 @@ typedef struct {
 } ContPad;
 
 static ContPad* sPads;
+static u16 sPadsHeld[PAD_COUNT];
+static u8 sSprintOn;
 
 void rt_pads_before_read(ContPad* pads) {
     sPads = pads;
@@ -129,7 +132,14 @@ void rt_pads_before_read(ContPad* pads) {
 
 void rt_pads_after_read(void) {
     for (s32 i = 0; i < PAD_COUNT; i++) {
-        if (sPads[i].button & RT_SPRINT_BUTTON) {
+        u16 button = sPads[i].button;
+        if (button & ~sPadsHeld[i] & RT_SPRINT_BUTTON) {
+            sSprintOn = !sSprintOn;
+        }
+        sPadsHeld[i] = button;
+    }
+    if (sSprintOn) {
+        for (s32 i = 0; i < PAD_COUNT; i++) {
             sPads[i].button |= SPRINT_BIT;
         }
     }

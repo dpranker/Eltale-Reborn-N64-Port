@@ -44,7 +44,9 @@ def main():
     ratio = gameplay["sprint_speed"] / gameplay["walk_speed"]
     check(near(ratio, SPRINT_RATE, 0.03), f"sprint is x{SPRINT_RATE}: measured x{ratio:.3f}")
     ratio = gameplay["sprint_button_speed"] / gameplay["walk_speed"]
-    check(near(ratio, SPRINT_RATE, 0.03), f"the L button sprints: measured x{ratio:.3f}")
+    check(near(ratio, SPRINT_RATE, 0.03), f"a tap of L turns sprint on: measured x{ratio:.3f}")
+    ratio = gameplay["sprint_off_speed"] / gameplay["walk_speed"]
+    check(near(ratio, 1.0, 0.03), f"another tap turns it off: measured x{ratio:.3f}")
     ratio = vanilla["sprint_button_speed"] / vanilla["walk_speed"]
     check(near(ratio, 1.0, 0.03), f"L doesn't sprint without the mod: measured x{ratio:.3f}")
     ratio = gameplay["encounter_meter_per_step"] / vanilla["encounter_meter_per_step"]

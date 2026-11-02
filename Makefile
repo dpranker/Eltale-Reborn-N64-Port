@@ -28,7 +28,7 @@ ROM_DIR  := $(BUILD)/rom/$(subst $(comma),-,$(MODS))
 NRM_gameplay := vendor/Eltale-Reborn-DC-Port/eltale/quest64_modern_gameplay.nrm
 NRM_eltale   := vendor/Eltale-Reborn-DC-Port/eltale/eltale_reborn.nrm
 
-.PHONY: phase1 test-phase1 phase2 test-phase2 test-rom-gameplay test-rom-vanilla test-phase3 rom clean
+.PHONY: phase1 test-phase1 phase2 test-phase2 test-rom-gameplay test-rom-vanilla test-rom-eltale test-phase3 rom clean
 
 phase1: $(BUILD)/phase1.z64
 
@@ -94,6 +94,11 @@ test-phase2: phase2 phase1 $(BUILD)/phase1_syms.gdb $(BUILD)/vanilla.z64
 test-rom-gameplay: $(BUILD)/phase2/input/mod_syms.bin
 	$(PYTHON) tools/build_rom.py --out $(BUILD)/rom/gameplay-test --name gameplay-test --mod $(NRM_gameplay) --mod $(BUILD)/phase2/input \
 		--sprint-button $(SPRINT) $(foreach s,$(SETTINGS),--set $(s))
+
+# Both mods with test-only controller input.
+test-rom-eltale: $(BUILD)/phase2/input/mod_syms.bin
+	$(PYTHON) tools/build_rom.py --out $(BUILD)/rom/eltale-test --name eltale-test --hook-order eltale_reborn,quest64_modern_gameplay,test_input \
+		--mod $(NRM_gameplay) --mod $(NRM_eltale) --mod $(BUILD)/phase2/input --sprint-button $(SPRINT) $(foreach s,$(SETTINGS),--set $(s))
 
 test-rom-vanilla: $(BUILD)/phase2/input/mod_syms.bin
 	$(PYTHON) tools/build_rom.py --out $(BUILD)/rom/vanilla-test --name vanilla-test --mod $(BUILD)/phase2/input

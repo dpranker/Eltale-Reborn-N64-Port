@@ -12,11 +12,18 @@ for stick in ((0, -80), (0, 80), (0, -80), (0, 80)):
 print("walks", [round(v, 3) for v in walks], "sprints", [round(v, 3) for v in sprints], flush=True)
 metric("walk_speed", max(walks))
 metric("sprint_speed", max(sprints))
+# L toggles: a tap turns sprint on with nothing held, and another turns it off.
+press(L)
 shoulder = []
 for stick in ((0, -80), (0, 80), (0, -80), (0, 80)):
-    shoulder.append(speed(stick, buttons=L, frames=8))
-print("with L", [round(v, 3) for v in shoulder], flush=True)
+    shoulder.append(speed(stick, frames=8))
+press(L)
+after = []
+for stick in ((0, -80), (0, 80), (0, -80), (0, 80)):
+    after.append(speed(stick, frames=8))
+print("sprint on", [round(v, 3) for v in shoulder], "off again", [round(v, 3) for v in after], flush=True)
 metric("sprint_button_speed", max(shoulder))
+metric("sprint_off_speed", max(after))
 
 warp(2)                                      # Holy Plain
 metric("map", read32(NEXT_MAP))
