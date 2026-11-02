@@ -12,6 +12,8 @@ ENCOUNTER_RATE = 0.5
 EXP_RATE = 2.0
 # At 30 polls a second, ten minutes.
 IDLE_POLLS = 18000
+# Left over on a thread's stack, at the deepest it went. The mods run on the game's own stacks.
+MIN_STACK_FREE = 512
 
 
 def metrics(path):
@@ -52,6 +54,12 @@ def main():
     check(near(ratio, EXP_RATE, 0.01), f"EXP is x{EXP_RATE} from the same fight: {gameplay['exp_gained']:.0f} against {vanilla['exp_gained']:.0f}")
     check(idle.get("idle_polls", 0) >= IDLE_POLLS, f"idled for at least ten game minutes: {idle.get('idle_polls', 0):.0f} polls")
     check(idle.get("idle_alive_after", 0) >= 30, "the game was still polling input afterwards")
+    for name, run in (("vanilla", vanilla), ("gameplay", gameplay), ("idle", idle)):
+        check(run.get("cpu_faults") == 0, f"{name}: no CPU faults")
+    for key in sorted(k for k in gameplay if k.startswith("stack_used_")):
+        thread = key[len("stack_used_"):]
+        free = min(gameplay[f"stack_free_{thread}"], idle.get(f"stack_free_{thread}", gameplay[f"stack_free_{thread}"]))
+        check(free >= MIN_STACK_FREE, f"{thread} stack: {gameplay[key]:.0f} used with the mod, {vanilla[key]:.0f} without, {free:.0f} free")
     print("PHASE 3 AUTOMATED CHECKS PASS" if not failures else "PHASE 3 AUTOMATED CHECKS FAIL")
     sys.exit(1 if failures else 0)
 

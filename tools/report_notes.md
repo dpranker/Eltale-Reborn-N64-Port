@@ -49,6 +49,28 @@ This is static analysis only. Nothing has run in ares or on hardware yet, and fr
 - **Module sizes:** compared with the brief's table, story data is larger (about 800 KB with its strings, against ~480 KB). Script/event code is smaller (58 KB against ~85 KB). Models, 2D/UI, audio and debug are close. `ending`, `limelin_castle` and `main` weren't listed and are shown as Unlisted.
 - **`0x807FFFFF` in the gameplay mod:** this is a "pointer below 8 MB" check, and it stays valid at 0x80400000. It's safe because the image stays under 8 MB. No change needed.
 
+### Second pass: what PC does outside the mods, and what only hardware enforces
+
+The first pass reviewed `patches/` but not the PC's C++ code. These findings came after Phase 3.
+
+**PC renderer (`src/main/rt64_render_context.cpp`).** It has game-specific behaviour that never reaches an N64:
+
+- It opens the 8-pixel overscan margins and stretches fades for widescreen. The N64 keeps the original margins, as expected.
+- Advanced lighting (`scene_lighting.cpp`) is absent, as already listed.
+- **Battle rings:** with smooth transparency on, it redraws the ribbon as a steady, blended shape, because the mod draws it as many overlapping copies on one plane. The N64 build has smooth transparency off, so rings may flicker. Check in motion in Phase 5.
+
+**Float traps.** `__osInitialize_common` sets the FPU control register to `0x01000800`: flush-to-zero, with invalid-operation traps on. The mods have 78 float-to-int conversions, 43 float divides and 230 compares that could trap where PC carries on. ares raises these as gdb signals, so tests fail on them, and `tests/run_phase3.sh` proves that with deliberate faults. The game registers no fault handler, so on hardware a fault just stops the thread.
+
+**Saves.** PC replaces the game's pak check and removes its save-name check, and the DC port answers the pak check itself. The real libultra save path has never run with Eltale's extended data, so Phase 4 must test it.
+
+**Stacks.** Trampolines add 0x60 bytes per level. In the Phase 3 runs with the gameplay mod, the game thread's deepest use was 2,256 of 8,192 bytes, the same as without it. Eltale has a hook with a 592-byte frame, so measure again in Phase 4. The audio thread's lower bound is assumed from the other stacks' size, not confirmed.
+
+**Stale stack reads.** The DC port found the game reading stack it never wrote, in 7 places. Neither mod hooks the pair it names. A simple static scan flagged 8 functions; the one hooked function, `func_8001ED5C`, is a false alarm (it reads part of a word it stored), and the scan misses conditional cases such as the DC port's. The other 6 remain unidentified, so watch for symptoms such as stuck sounds.
+
+**Clean:** no instructions the VR4300 lacks, no double-precision float code on odd registers, no high-byte checks against the old base, and no mod access to game code in `.main` or the overlays. Accesses in those address ranges are data.
+
+**Not checked statically:** display list nesting, vertex limits and combiner settings need a captured frame. The PC's fork of RT64 tolerates some things hardware may not, such as oversized texture loads.
+
 ### Limits of this scan
 
 - GBI words loaded from tables, or passed beyond the next call, can be missed. Phase 5 must still inspect actual display lists.

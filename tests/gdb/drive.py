@@ -8,10 +8,22 @@ MAILBOX = 0xA0710000
 BUTTONS, STICK, POLLS = MAILBOX, MAILBOX + 4, MAILBOX + 8
 A, B, Z, START, DUP, DDOWN, DLEFT, DRIGHT = 0x8000, 0x4000, 0x2000, 0x1000, 0x0800, 0x0400, 0x0200, 0x0100
 L, R, CUP, CDOWN, CLEFT, CRIGHT = 0x0020, 0x0010, 0x0008, 0x0004, 0x0002, 0x0001
+FAULT_KIND = MAILBOX + 12
+EXPECT_FAULTS = False
 POLL_ENTRY = 0x8003AC9C  # osContGetReadData
 ROOT = os.getcwd()
 inferior = None
 failures = 0
+faults = []
+IGNORED_SIGNALS = ("SIGTRAP", "SIGINT", "SIGWINCH", "0")
+
+
+def on_stop(event):
+    """ares reports CPU exceptions as signals. The game has no fault handler, so one means a thread just died."""
+    if isinstance(event, gdb.SignalEvent) and event.stop_signal not in IGNORED_SIGNALS:
+        pc = int(gdb.parse_and_eval("$pc")) & 0xFFFFFFFF
+        faults.append((event.stop_signal, pc))
+        print(f"FAULT: {event.stop_signal} at {pc:#x}", flush=True)
 
 
 def connect():
@@ -21,6 +33,7 @@ def connect():
         gdb.execute(line)
     gdb.execute(f"target remote 127.0.0.1:{port}", to_string=True)
     inferior = gdb.selected_inferior()
+    gdb.events.stop.connect(on_stop)
 
 
 def read32(addr):
@@ -42,6 +55,8 @@ def write32(addr, value):
 
 def resume():
     gdb.execute("continue", to_string=True)
+    if faults and not EXPECT_FAULTS:
+        raise gdb.GdbError(f"CPU fault: {faults[-1][0]} at {faults[-1][1]:#x}")
 
 
 def wait_polls(count):

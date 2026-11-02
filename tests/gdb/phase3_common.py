@@ -119,5 +119,26 @@ def force_battle(seed=0x1234):
     raise gdb.GdbError("no battle started")
 
 
+# Thread stacks, from each osCreateThread site. All are in bss, which boot zeroes, so the lowest non-zero word
+# is how deep the thread has gone. The bottoms are the top of whatever sits below each one.
+STACKS = {
+    "game": (0x800761F0, 0x800781F0),
+    "sched": (0x800782D0, 0x800792D0),
+    "audio_task": (0x800792D0, 0x8007A2D0),
+    "gfx_task": (0x8007A2D0, 0x8007B2D0),
+    "audio": (0x8008E240, 0x8008F240),
+    "pi": (0x80092F00, 0x80093F00),
+    "vi": (0x80094190, 0x80095190),
+}
+
+
+def report_stacks():
+    for name, (low, top) in STACKS.items():
+        data = inferior.read_memory(low, top - low).tobytes()
+        first = next((i & ~3 for i, b in enumerate(data) if b), len(data))
+        metric(f"stack_used_{name}", len(data) - first)
+        metric(f"stack_free_{name}", first)
+
+
 def metric(name, value):
     print(f"METRIC {name} {value}", flush=True)
