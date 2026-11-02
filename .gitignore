@@ -12,3 +12,8 @@ tests/states/
 *.sra
 *.fla
 __pycache__/
+
+# Working notes, kept local
+PLAN.md
+REPORT.md
+CLAUDE.md
