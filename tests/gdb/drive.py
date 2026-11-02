@@ -15,6 +15,7 @@ ROOT = os.getcwd()
 inferior = None
 failures = 0
 faults = []
+fault_registers = []
 IGNORED_SIGNALS = ("SIGTRAP", "SIGINT", "SIGWINCH", "0")
 
 
@@ -24,6 +25,7 @@ def on_stop(event):
         pc = int(gdb.parse_and_eval("$pc")) & 0xFFFFFFFF
         faults.append((event.stop_signal, pc))
         print(f"FAULT: {event.stop_signal} at {pc:#x}", flush=True)
+        fault_registers.append(gdb.execute("info registers", to_string=True))
 
 
 def connect():
@@ -56,6 +58,7 @@ def write32(addr, value):
 def resume():
     gdb.execute("continue", to_string=True)
     if faults and not EXPECT_FAULTS:
+        print(f"FAULT: {faults[-1][0]} at {faults[-1][1]:#x}\n{fault_registers[-1]}", flush=True)
         raise gdb.GdbError(f"CPU fault: {faults[-1][0]} at {faults[-1][1]:#x}")
 
 
