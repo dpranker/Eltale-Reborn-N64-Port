@@ -1,6 +1,7 @@
 # Story helpers for the Eltale scripts, after the Dreamcast port's tests/mod_story.txt. Sourced by the Phase 4 scripts.
 gdb.execute("source tests/gdb/phase3_common.py")
 import json
+import os
 
 GAME_MODE = 0x8007B2E0
 MODE_FIELD = 1
@@ -8,7 +9,7 @@ BUSY_BITS = 0xDF
 NPCS, NPC_COUNT, NPC_SIZE = 0x8007BD30, 0x8007BCE4, 0x84
 GOLD = 0x8007BA94
 ELTALE_SAVE_OFFSET = 0x143470      # gModSave in the mod's link map
-layout = json.load(open("build/rom/eltale-test/layout.json"))
+layout = json.load(open(os.environ.get("ELTALE_LAYOUT", "build/rom/eltale-test/layout.json")))
 ELTALE_BASE = next(m["base"] for m in layout["mods"] if m["id"] == "eltale_reborn")
 MOD_SAVE = ELTALE_BASE + ELTALE_SAVE_OFFSET
 FLAGS = MOD_SAVE + 8
