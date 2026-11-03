@@ -1,5 +1,6 @@
 # Plays the village farewell and Mira on the road, capturing frames throughout, so her custom model can be looked at.
 gdb.execute("source tests/gdb/dl_common.py")
+os.makedirs(f"{ROOT}/build/shots/ares", exist_ok=True)
 title_to_new_game()
 talk(6000)
 set_flag(16)
@@ -22,6 +23,9 @@ for i in range(400):
     wait_polls(27)
     if i % 3 == 0:
         capture(f"mira_{n:03d}")
+        if os.environ.get("ARES_WINDOW_SHOTS"):
+            # gdb has ares halted here, so the window holds still. Spectacle takes whichever window is active.
+            subprocess.run(["spectacle", "-b", "-n", "-a", "-o", f"{ROOT}/build/shots/ares/mira_{n:03d}.png"], check=True, timeout=30)
         n += 1
 print(f"AT end: flags={read32(FLAGS):08x} free={free()}", flush=True)
 check(read32(FLAGS) & 0x20000000 != 0, "MIRA_ROAD_SCENE is set")
