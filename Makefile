@@ -28,7 +28,7 @@ ROM_DIR  := $(BUILD)/rom/$(subst $(comma),-,$(MODS))
 NRM_gameplay := vendor/Eltale-Reborn-DC-Port/eltale/quest64_modern_gameplay.nrm
 NRM_eltale   := vendor/Eltale-Reborn-DC-Port/eltale/eltale_reborn.nrm
 
-.PHONY: phase1 test-phase1 phase2 test-phase2 test-rom-gameplay test-rom-vanilla test-rom-eltale test-phase3 test-phase4 perf-test-roms test-perf test-dl test-late perf-roms cart rom clean
+.PHONY: phase1 test-phase1 phase2 test-phase2 test-rom-gameplay test-rom-vanilla test-rom-eltale test-phase3 test-phase4 perf-test-roms test-perf test-dl test-late perf-roms cart patch rom clean
 
 phase1: $(BUILD)/phase1.z64
 
@@ -131,6 +131,14 @@ perf-roms: $(BUILD)/phase2/perf_hud/mod_syms.bin
 	$(PYTHON) tools/build_rom.py --out $(BUILD)/rom/perf-vanilla --name perf-vanilla --mod $(BUILD)/phase2/perf_hud
 	$(PYTHON) tools/build_rom.py --out $(BUILD)/rom/perf-eltale --name perf-eltale --hook-order eltale_reborn,quest64_modern_gameplay,test_perf_hud \
 		--mod $(NRM_gameplay) --mod $(NRM_eltale) --mod $(BUILD)/phase2/perf_hud --sprint-button $(SPRINT)
+
+# A BPS patch from the vanilla ROM to the real build. IPS can't address past 16 MB, where the mod image starts.
+PATCH := $(BUILD)/patch/eltale-n64.bps
+
+patch: rom
+	@mkdir -p $(BUILD)/patch
+	$(PYTHON) tools/make_bps.py --rom $(ROM) --target $(ROM_DIR)/$(subst $(comma),-,$(MODS)).z64 --out $(PATCH)
+	$(PYTHON) tests/test_bps.py $(ROM) $(ROM_DIR)/$(subst $(comma),-,$(MODS)).z64 $(PATCH)
 
 # Copies the real ROM and both counter ROMs to the SummerCart64's SD card. Keep the console off while this runs.
 SC64        := .tools/sc64/sc64deployer
