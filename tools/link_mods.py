@@ -69,7 +69,7 @@ DEFAULT_SPRINT_BUTTON = "L"
 RT64_OP_HALF = 0x6400
 G_NOOP_HALF = 0xC000
 RT64_COMMANDS = (0x6400002C, 0x6400000C)
-RT64_DATA_WORDS = {"eltale_reborn": (0x10786C,)}
+RT64_DATA_WORDS = {"eltale_reborn": (0x10C548,)}
 
 # Unrelocated address-like values each mod is known to use, and what to replace them with. A value with no
 # replacement is safe as it is. Any other value fails the build, because it could be a check against the old base.

@@ -8,7 +8,7 @@ MODE_FIELD = 1
 BUSY_BITS = 0xDF
 NPCS, NPC_COUNT, NPC_SIZE = 0x8007BD30, 0x8007BCE4, 0x84
 GOLD = 0x8007BA94
-ELTALE_SAVE_OFFSET = 0x143470      # gModSave in the mod's link map
+ELTALE_SAVE_OFFSET = 0x14C170      # gModSave in 1.1.1, matched from its relocations against the 1.0.0 link map
 layout = json.load(open(os.environ.get("ELTALE_LAYOUT", "build/rom/eltale-test/layout.json")))
 ELTALE_BASE = next(m["base"] for m in layout["mods"] if m["id"] == "eltale_reborn")
 MOD_SAVE = ELTALE_BASE + ELTALE_SAVE_OFFSET
