@@ -35,7 +35,8 @@ def apply_patch(patch, source):
     if read_number() != len(source):
         raise ValueError("source size")
     target_size = read_number()
-    at += read_number()
+    metadata_size = read_number()
+    at += metadata_size
     out = bytearray()
     source_rel = target_rel = 0
     while at < len(patch) - 12:
