@@ -61,8 +61,8 @@ RUNTIME_HOOKS = {"osSpTaskLoad": "rt_before_task"}
 
 # The gameplay mod's sprint needs a real button. Runtime return hooks run after any mod's, so test input counts.
 SPRINT_MOD = "quest64_modern_gameplay"
-SPRINT_BUTTONS = {"L": 0x0020, "R": 0x0010, "Z": 0x2000, "C-UP": 0x0008, "C-DOWN": 0x0004, "C-LEFT": 0x0002, "C-RIGHT": 0x0001}
-DEFAULT_SPRINT_BUTTON = "L"
+SPRINT_BUTTONS = {"D-UP": 0x0800, "D-DOWN": 0x0400, "D-LEFT": 0x0200, "D-RIGHT": 0x0100, "L": 0x0020, "R": 0x0010, "Z": 0x2000, "C-UP": 0x0008, "C-DOWN": 0x0004, "C-LEFT": 0x0002, "C-RIGHT": 0x0001}
+DEFAULT_SPRINT_BUTTON = "D-UP"
 
 # RT64's extended opcode. Real F3DEX has no such command, so these become G_NOOP. They only tell RT64 to read
 # memory above 8 MB and to group matrices for interpolation.

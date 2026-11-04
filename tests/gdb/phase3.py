@@ -12,12 +12,12 @@ for stick in ((0, -80), (0, 80), (0, -80), (0, 80)):
 print("walks", [round(v, 3) for v in walks], "sprints", [round(v, 3) for v in sprints], flush=True)
 metric("walk_speed", max(walks))
 metric("sprint_speed", max(sprints))
-# L toggles: a tap turns sprint on with nothing held, and another turns it off.
-press(L)
+# D-Pad Up toggles: a tap turns sprint on with nothing held, and another turns it off.
+press(DUP)
 shoulder = []
 for stick in ((0, -80), (0, 80), (0, -80), (0, 80)):
     shoulder.append(speed(stick, frames=8))
-press(L)
+press(DUP)
 after = []
 for stick in ((0, -80), (0, 80), (0, -80), (0, 80)):
     after.append(speed(stick, frames=8))

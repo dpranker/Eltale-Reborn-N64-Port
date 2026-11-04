@@ -111,9 +111,15 @@ void rt_before_task(void) {
 
 // The gameplay mod's sprint reads button bit 0x40, which no N64 button sets. Pressing the mapped button turns
 // sprint on or off, and while it's on that bit stays set. The pad pointer only has to last until the same call
-// returns.
+// returns. A press only counts while Brian is free to move, since menus use the D-pad.
 #define SPRINT_BIT 0x0040
 #define PAD_COUNT 4
+#define GAME_MODE (*(volatile u16*)0x8007B2E0)
+#define GAME_MODE_FIELD 1
+#define GAME_STATE (*(volatile u32*)0x8007B2E4)
+#define GAME_STATE_BUSY 0xDF
+#define PLAYER_STATE (*(volatile u16*)0x8007BAB8)
+#define PLAYER_STATE_FREE 3
 
 typedef struct {
     u16 button;
@@ -124,7 +130,7 @@ typedef struct {
 
 static ContPad* sPads;
 static u16 sPadsHeld[PAD_COUNT];
-static u8 sSprintOn;
+volatile u8 rt_sprint_on;           // Read by tests.
 
 void rt_pads_before_read(ContPad* pads) {
     sPads = pads;
@@ -133,12 +139,13 @@ void rt_pads_before_read(ContPad* pads) {
 void rt_pads_after_read(void) {
     for (s32 i = 0; i < PAD_COUNT; i++) {
         u16 button = sPads[i].button;
-        if (button & ~sPadsHeld[i] & RT_SPRINT_BUTTON) {
-            sSprintOn = !sSprintOn;
+        if ((button & ~sPadsHeld[i] & RT_SPRINT_BUTTON) && GAME_MODE == GAME_MODE_FIELD
+            && !(GAME_STATE & GAME_STATE_BUSY) && PLAYER_STATE < PLAYER_STATE_FREE) {
+            rt_sprint_on = !rt_sprint_on;
         }
         sPadsHeld[i] = button;
     }
-    if (sSprintOn) {
+    if (rt_sprint_on) {
         for (s32 i = 0; i < PAD_COUNT; i++) {
             sPads[i].button |= SPRINT_BIT;
         }

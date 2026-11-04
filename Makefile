@@ -23,13 +23,13 @@ LOADER_MAGIC_ADDR := 0x807FFFF0
 comma    := ,
 MODS     ?= gameplay,eltale
 SETTINGS ?=
-SPRINT   ?= L
+SPRINT   ?= D-UP
 ROM_DIR  := $(BUILD)/rom/$(subst $(comma),-,$(MODS))
 NRM_gameplay := vendor/Eltale-Reborn/mods/quest64_modern_gameplay.nrm
 # 1.1.3 has no upstream tag yet, so it comes from the gitignored source/ folder. Move back to the submodule once tagged.
 NRM_eltale   := source/1.1.3/eltale_reborn.nrm
 
-.PHONY: phase1 test-phase1 phase2 test-phase2 test-rom-gameplay test-rom-vanilla test-rom-eltale test-phase3 test-phase4 perf-test-roms test-perf test-dl test-late test-combo test-glencoe test-sweep test-overscan perf-roms cart patch rom clean
+.PHONY: phase1 test-phase1 phase2 test-phase2 test-rom-gameplay test-rom-vanilla test-rom-eltale test-phase3 test-phase4 perf-test-roms test-perf test-dl test-late test-combo test-glencoe test-sweep test-sprint test-glencoe-rom test-overscan perf-roms cart patch rom clean
 
 phase1: $(BUILD)/phase1.z64
 
@@ -138,11 +138,18 @@ test-combo: $(BUILD)/phase2/input/mod_syms.bin $(BUILD)/phase2/perf/mod_syms.bin
 	tests/run_combo.sh
 
 # The heaviest display list found: Glencoe Forest, with the spell menu open and Healing being cast.
-test-glencoe: $(BUILD)/phase2/input/mod_syms.bin $(BUILD)/phase2/perf/mod_syms.bin $(BUILD)/phase2/combo/mod_syms.bin
+test-glencoe: test-glencoe-rom
 	tests/run_glencoe.sh
 
+test-glencoe-rom: $(BUILD)/phase2/input/mod_syms.bin $(BUILD)/phase2/perf/mod_syms.bin $(BUILD)/phase2/combo/mod_syms.bin
+	tests/build_dev_rom.sh
+
+# The sprint toggle: on and off in the field, ignored in menus.
+test-sprint: test-glencoe-rom
+	tests/run_sprint.sh
+
 # Every room's heaviest display list against the game's limit, using the ROM from test-glencoe.
-test-sweep:
+test-sweep: test-glencoe-rom
 	tests/run_room_sweep.sh
 
 # Playable ROMs with the frame counter on screen, for consoles with no gdb. Not for release.
