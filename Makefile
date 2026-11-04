@@ -28,7 +28,7 @@ ROM_DIR  := $(BUILD)/rom/$(subst $(comma),-,$(MODS))
 NRM_gameplay := vendor/Eltale-Reborn/mods/quest64_modern_gameplay.nrm
 NRM_eltale   := vendor/Eltale-Reborn/mods/eltale_reborn.nrm
 
-.PHONY: phase1 test-phase1 phase2 test-phase2 test-rom-gameplay test-rom-vanilla test-rom-eltale test-phase3 test-phase4 perf-test-roms test-perf test-dl test-late perf-roms cart patch rom clean
+.PHONY: phase1 test-phase1 phase2 test-phase2 test-rom-gameplay test-rom-vanilla test-rom-eltale test-phase3 test-phase4 perf-test-roms test-perf test-dl test-late test-combo perf-roms cart patch rom clean
 
 phase1: $(BUILD)/phase1.z64
 
@@ -125,6 +125,10 @@ test-dl: perf-test-roms
 # The first boss and the mod's debug jumps, including the ending through the credits. Takes about 20 minutes.
 test-late: perf-test-roms
 	tests/run_late_game.sh
+
+# Timed second swings and back attacks in a real battle, with the options on and off.
+test-combo: $(BUILD)/phase2/input/mod_syms.bin $(BUILD)/phase2/perf/mod_syms.bin $(BUILD)/phase2/combo/mod_syms.bin
+	tests/run_combo.sh
 
 # Playable ROMs with the frame counter on screen, for consoles with no gdb. Not for release.
 perf-roms: $(BUILD)/phase2/perf_hud/mod_syms.bin

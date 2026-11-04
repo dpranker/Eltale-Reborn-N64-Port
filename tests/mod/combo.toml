@@ -1,0 +1,19 @@
+[manifest]
+id = "test_combo"
+version = "1.0.0"
+display_name = "Test combo"
+description = "Test-only staff combo probe"
+short_description = "Test-only staff combo probe"
+authors = [ "eltale-n64" ]
+game_id = "qs64"
+minimum_recomp_version = "1.0.0"
+dependencies = [ ]
+optional_dependencies = [ ]
+native_libraries = [ ]
+
+[inputs]
+elf_path = "../../build/phase2/combo.elf"
+mod_filename = "test_combo"
+func_reference_syms_file = "../../vendor/Eltale-Reborn/Quest64Syms/dump.toml"
+data_reference_syms_files = [ "../../vendor/Eltale-Reborn/Quest64Syms/data_dump.toml" ]
+additional_files = [ ]
