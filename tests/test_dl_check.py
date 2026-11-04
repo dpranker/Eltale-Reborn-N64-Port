@@ -173,6 +173,17 @@ rectangle = (dl.G_TEXRECT << 24 | (16 * 4) << 12 | 16 * 4, 0)
 r = run(m, m.words(rectangle, (0x64 << 24, 0), (0x64 << 24, 0), END))
 check(not r["problems"] and abs(r["pixels"] - 256) < 1, f"a texture rectangle consumes its halves: {r['pixels']:.0f}")
 
+# 2D rectangles near the edge are reported, and whether the scissor cuts them.
+scissor = (0xED << 24 | (8 * 4) << 12 | 8 * 4, (312 * 4) << 12 | 232 * 4)
+def rect(ulx, uly, lrx, lry):
+    return (dl.G_TEXRECT << 24 | (lrx * 4) << 12 | lry * 4, (ulx * 4) << 12 | uly * 4)
+r = run(m, m.words(scissor, rect(300, 100, 314, 116), (0x64 << 24, 0), (0x64 << 24, 0), END))
+check(len(r["edge_rects"]) == 1 and r["edge_rects"][0]["clipped"], f"a rectangle past the scissor is reported: {r['edge_rects']}")
+r = run(m, m.words(scissor, rect(100, 100, 120, 116), (0x64 << 24, 0), (0x64 << 24, 0), END))
+check(not r["edge_rects"], "a rectangle in the middle isn't")
+r = run(m, m.words(rect(0, 0, 320, 240), (0x64 << 24, 0), (0x64 << 24, 0), END))
+check(not r["edge_rects"], "a full-screen rectangle isn't")
+
 # A list that loops forever stops rather than hanging.
 loop_at = m.top
 m.words((dl.G_DL << 24 | 1 << 16, loop_at), END)

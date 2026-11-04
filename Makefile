@@ -28,7 +28,7 @@ ROM_DIR  := $(BUILD)/rom/$(subst $(comma),-,$(MODS))
 NRM_gameplay := vendor/Eltale-Reborn/mods/quest64_modern_gameplay.nrm
 NRM_eltale   := vendor/Eltale-Reborn/mods/eltale_reborn.nrm
 
-.PHONY: phase1 test-phase1 phase2 test-phase2 test-rom-gameplay test-rom-vanilla test-rom-eltale test-phase3 test-phase4 perf-test-roms test-perf test-dl test-late test-combo perf-roms cart patch rom clean
+.PHONY: phase1 test-phase1 phase2 test-phase2 test-rom-gameplay test-rom-vanilla test-rom-eltale test-phase3 test-phase4 perf-test-roms test-perf test-dl test-late test-combo test-overscan perf-roms cart patch rom clean
 
 phase1: $(BUILD)/phase1.z64
 
@@ -125,6 +125,12 @@ test-dl: perf-test-roms
 # The first boss and the mod's debug jumps, including the ending through the credits. Takes about 20 minutes.
 test-late: perf-test-roms
 	tests/run_late_game.sh
+
+# 2D UI against the 8-pixel margins: nothing cut by the scissor, and anything in the margins listed.
+test-overscan: perf-test-roms
+	echo 'source tests/gdb/overscan.py' > $(BUILD)/overscan.gdb
+	PERF_TARGET=eltale ELTALE_LAYOUT=$(BUILD)/rom/perf-eltale-test/layout.json tests/run_ares.sh $(BUILD)/rom/perf-eltale-test/perf-eltale-test.z64 $(BUILD)/overscan.gdb 300 > $(BUILD)/overscan.log 2>&1; status=$$?; \
+	grep -E '^(ok:|FAIL|FAULT|NEAR)|CPU fault|Traceback|TIMEOUT' $(BUILD)/overscan.log | cut -c1-170; exit $$status
 
 # Timed second swings and back attacks in a real battle, with the options on and off.
 test-combo: $(BUILD)/phase2/input/mod_syms.bin $(BUILD)/phase2/perf/mod_syms.bin $(BUILD)/phase2/combo/mod_syms.bin

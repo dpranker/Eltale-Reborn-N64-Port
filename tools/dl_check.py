@@ -16,6 +16,8 @@ DL_DEPTH = 18
 TMEM_BYTES = 4096
 MAX_COMMANDS = 200000
 RDP_CLOCKS_PER_FRAME = 62_500_000 * 2 / 59.94  # A 30 fps frame.
+SAFE = (8, 8, 312, 232)  # Inside the 8-pixel margins the game's 3D scissor keeps, and that a display's overscan can hide.
+LARGE_RECT = (300, 200)  # At least this wide or tall: a background or a fade, which is meant to reach the edge.
 
 G_SPNOOP, G_MTX, G_MOVEMEM, G_VTX, G_DL = 0x00, 0x01, 0x03, 0x04, 0x06
 G_TRI2, G_MODIFYVTX, G_RDPHALF_2, G_RDPHALF_1, G_QUAD = 0xB1, 0xB2, 0xB3, 0xB4, 0xB5
@@ -111,6 +113,7 @@ class Checker:
         self.timg_size = 2
         self.tiles = [(0, 2) for _ in range(8)]
         self.problems = {}
+        self.edge_rects = {}
         self.stats = dict(commands=0, lists=0, deepest=0, vertices=0, triangles=0, off_screen=0, culled=0, drawn=0,
                           pixels=0.0, clocks=0.0, rect_pixels=0.0, texture_loads=0, texture_bytes=0, largest_load=0,
                           two_cycle_pixels=0.0, mod_lists=0)
@@ -189,11 +192,23 @@ class Checker:
         lrx, lry = (w0 >> 12) & 0xFFF, w0 & 0xFFF
         ulx, uly = (w1 >> 12) & 0xFFF, w1 & 0xFFF
         x0, y0, x1, y1 = self.scissor
+        self.note_edge(ulx / 4, uly / 4, lrx / 4 + extra, lry / 4 + extra, where)
         w = min(lrx / 4 + extra, x1) - max(ulx / 4, x0)
         h = min(lry / 4 + extra, y1) - max(uly / 4, y0)
         if w > 0 and h > 0:
             self.stats["rect_pixels"] += w * h
             self.add_pixels(w * h)
+
+    def note_edge(self, ulx, uly, lrx, lry, where):
+        """Records a 2D rectangle that a display's overscan could hide, or that the scissor cuts. Backgrounds and fades are meant to."""
+        if lrx - ulx >= LARGE_RECT[0] or lry - uly >= LARGE_RECT[1] or lrx <= ulx or lry <= uly:
+            return
+        x0, y0, x1, y1 = self.scissor
+        clipped = ulx < x0 or uly < y0 or lrx > x1 or lry > y1
+        margin = ulx < SAFE[0] or uly < SAFE[1] or lrx > SAFE[2] or lry > SAFE[3]
+        if clipped or margin:
+            key = (ulx, uly, lrx, lry, self.scissor, clipped, self.owner(where))
+            self.edge_rects[key] = self.edge_rects.get(key, 0) + 1
 
     def texture_load(self, tile, bytes_loaded, where):
         self.stats["texture_loads"] += 1
@@ -298,4 +313,5 @@ class Checker:
         stats = dict(self.stats)
         stats["rdp_best_case_percent"] = stats["clocks"] / RDP_CLOCKS_PER_FRAME * 100
         stats["problems"] = [{"kind": k, "at": o, "detail": d, "count": n} for (k, o, d), n in sorted(self.problems.items())]
+        stats["edge_rects"] = [dict(rect=k[:4], scissor=k[4], clipped=k[5], at=k[6], count=n) for k, n in sorted(self.edge_rects.items())]
         return stats

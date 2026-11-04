@@ -71,6 +71,21 @@ G_NOOP_HALF = 0xC000
 RT64_COMMANDS = (0x6400002C, 0x6400000C)
 RT64_DATA_WORDS = {"eltale_reborn": (0x10C548,)}
 
+# Instructions changed for the N64, per mod version, each checked against what the mod has there. Any other word fails
+# the build, so a new version can't silently take a wrong patch.
+# The gold box's position is folded into constants in eltale_reborn's gold_draw_hud_amount. Its right edge is at x=312, so
+# the game's 8..312 scissor cuts its outline and shadow, which RT64 never shows because the PC renderer opens the scissor.
+# Coordinates sit at bit 14, so 1 off an upper half is 4 pixels left. The text's x is a plain immediate.
+CODE_WORDS = {
+    "eltale_reborn": {
+        0x11DF2C: (0x3C04F64E, 0x3C04F64D),  # fill rectangles' right edges: the outline and shadow, 314 and 312
+        0x11DF3C: (0x3C06004E, 0x3C06004D),  # the same, for the right outline's left edge: 312 and 313
+        0x11DF84: (0x3C0A004C, 0x3C0A004B),  # left edges, as 304 minus the text's width
+        0x11E040: (0x3C18E44E, 0x3C18E44D),  # the background's right edge
+        0x11E0A4: (0x24010134, 0x24010130),  # the text, 308 minus its width
+    },
+}
+
 # Unrelocated address-like values each mod is known to use, and what to replace them with. A value with no
 # replacement is safe as it is. Any other value fails the build, because it could be a check against the old base.
 ADDRESS_CONSTANTS = {
@@ -287,6 +302,12 @@ def apply_fixups(mod, data):
                 fail(f"{mod.id}: can't replace {value:#x} with {replacement:#x} using only the upper half")
             struct.pack_into(">I", data, off, (word & 0xFFFF0000) | (replacement >> 16))
             rewritten += 1
+
+    for off, (old, new) in CODE_WORDS.get(mod.id, {}).items():
+        word = struct.unpack_from(">I", data, off)[0]
+        if word != old:
+            fail(f"{mod.id}: expected {old:#010x} at {off:#x} but found {word:#010x}. The mod has changed, so find this patch's place again.")
+        struct.pack_into(">I", data, off, new)
 
     known_data = RT64_DATA_WORDS.get(mod.id, ())
     for off in range(0, len(data) & ~3, 4):
