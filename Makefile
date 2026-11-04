@@ -26,9 +26,10 @@ SETTINGS ?=
 SPRINT   ?= L
 ROM_DIR  := $(BUILD)/rom/$(subst $(comma),-,$(MODS))
 NRM_gameplay := vendor/Eltale-Reborn/mods/quest64_modern_gameplay.nrm
-NRM_eltale   := vendor/Eltale-Reborn/mods/eltale_reborn.nrm
+# 1.1.3 has no upstream tag yet, so it comes from the gitignored source/ folder. Move back to the submodule once tagged.
+NRM_eltale   := source/1.1.3/eltale_reborn.nrm
 
-.PHONY: phase1 test-phase1 phase2 test-phase2 test-rom-gameplay test-rom-vanilla test-rom-eltale test-phase3 test-phase4 perf-test-roms test-perf test-dl test-late test-combo test-overscan perf-roms cart patch rom clean
+.PHONY: phase1 test-phase1 phase2 test-phase2 test-rom-gameplay test-rom-vanilla test-rom-eltale test-phase3 test-phase4 perf-test-roms test-perf test-dl test-late test-combo test-glencoe test-sweep test-overscan perf-roms cart patch rom clean
 
 phase1: $(BUILD)/phase1.z64
 
@@ -136,6 +137,14 @@ test-overscan: perf-test-roms
 test-combo: $(BUILD)/phase2/input/mod_syms.bin $(BUILD)/phase2/perf/mod_syms.bin $(BUILD)/phase2/combo/mod_syms.bin
 	tests/run_combo.sh
 
+# The heaviest display list found: Glencoe Forest, with the spell menu open and Healing being cast.
+test-glencoe: $(BUILD)/phase2/input/mod_syms.bin $(BUILD)/phase2/perf/mod_syms.bin $(BUILD)/phase2/combo/mod_syms.bin
+	tests/run_glencoe.sh
+
+# Every room's heaviest display list against the game's limit, using the ROM from test-glencoe.
+test-sweep:
+	tests/run_room_sweep.sh
+
 # Playable ROMs with the frame counter on screen, for consoles with no gdb. Not for release.
 perf-roms: $(BUILD)/phase2/perf_hud/mod_syms.bin
 	$(PYTHON) tools/build_rom.py --out $(BUILD)/rom/perf-vanilla --name perf-vanilla --mod $(BUILD)/phase2/perf_hud
@@ -143,7 +152,7 @@ perf-roms: $(BUILD)/phase2/perf_hud/mod_syms.bin
 		--mod $(NRM_gameplay) --mod $(NRM_eltale) --mod $(BUILD)/phase2/perf_hud --sprint-button $(SPRINT)
 
 # A BPS patch from the vanilla ROM to the real build. IPS can't address past 16 MB, where the mod image starts.
-PATCH := $(BUILD)/patch/eltale-n64-1.1.2.bps
+PATCH := $(BUILD)/patch/eltale-n64-1.1.3.bps
 
 patch: rom
 	@mkdir -p $(BUILD)/patch

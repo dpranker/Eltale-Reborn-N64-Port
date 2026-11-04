@@ -80,4 +80,8 @@ if TARGET == "eltale":
 
 check(not faults, "no CPU faults")
 check(not any(row["problems"] for row in checked), "no display list problems")
+limit = 2560                       # Past this, a list writes over the next frame's task. See tests/gdb/glencoe.py.
+peak = max(row["list_peak"] for row in checked)
+print(f"RESULT list peak {peak} commands of {limit}", flush=True)
+check(peak * 10 <= limit * 9, f"the list stays under 90% of its buffer: {peak} of {limit}")
 finish()

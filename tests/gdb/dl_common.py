@@ -7,6 +7,7 @@ import dl_check
 TASK_START = 0x80034694            # osSpTaskStartGo, after the runtime's cache writeback in osSpTaskLoad's hook
 SWAP_FLAG = 0x40                   # The scheduler's task flag: this task ends the frame.
 M_GFXTASK = 1
+LIST_PEAK = 0x8007B34C             # The game's own count of the most commands any frame's list has used since boot.
 BLOCK = 0x10000
 checked = []
 
@@ -58,7 +59,7 @@ def capture(name):
         if swaps:
             break
     row = checker.summary()
-    row.update(scene=name, tasks=tasks, target=TARGET)
+    row.update(scene=name, tasks=tasks, target=TARGET, list_peak=read32(LIST_PEAK))
     print("DL " + json.dumps(row), flush=True)
     shot(f"dl_{TARGET}_{name}")
     checked.append(row)

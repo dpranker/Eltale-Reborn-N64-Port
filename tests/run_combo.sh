@@ -1,5 +1,6 @@
 #!/bin/sh
-# Timed second swings and back attacks, with the options on and off.
+# Timed second swings and back attacks, with the options on and off. Critical hits are off because they roll from the CPU
+# timer, which the test can't pin, and they're the same 1.5 times as a back attack.
 cd "$(dirname "$0")/.." || exit 2
 nrm=vendor/Eltale-Reborn/mods
 status=0
@@ -8,8 +9,8 @@ run() {
     name="$1"; shift
     python3 tools/build_rom.py --out "build/rom/dev-combo-$name" --name "dev-combo-$name" \
         --hook-order eltale_reborn,quest64_modern_gameplay,test_input,test_perf,test_combo \
-        --mod "$nrm/quest64_modern_gameplay.nrm" --mod "$nrm/eltale_reborn.nrm" --mod build/phase2/input --mod build/phase2/perf --mod build/phase2/combo \
-        --sprint-button L "$@" > /dev/null || exit 2
+        --mod "$nrm/quest64_modern_gameplay.nrm" --mod "source/1.1.3/eltale_reborn.nrm" --mod build/phase2/input --mod build/phase2/perf --mod build/phase2/combo \
+        --sprint-button L --set eltale_reborn.jp_critical_hits=Off "$@" > /dev/null || exit 2
     echo "== options $name"
     PERF_TARGET=eltale ELTALE_LAYOUT="build/rom/dev-combo-$name/layout.json" tests/run_ares.sh \
         "build/rom/dev-combo-$name/dev-combo-$name.z64" build/combo.gdb 400 > "build/combo_$name.log" 2>&1 || status=1
