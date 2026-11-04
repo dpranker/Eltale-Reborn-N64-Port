@@ -2,7 +2,7 @@
 # Solvaring on vanilla and Eltale, then the mod's debug jumps: the ending through the credits, the spell test, the
 # hounds and the guns. Each runs under the fault detector and the display list checker.
 cd "$(dirname "$0")/.." || exit 2
-nrm=vendor/Eltale-Reborn-DC-Port/eltale
+nrm=vendor/Eltale-Reborn/mods
 status=0
 echo 'source tests/gdb/boss.py' > build/boss.gdb
 echo 'source tests/gdb/dev_scene.py' > build/dev.gdb
