@@ -16,7 +16,7 @@ run_scene() {
     name="$1"; setting="$2"; polls="$3"; limit="$4"
     python3 tools/build_rom.py --out "build/rom/dev-$name" --name "dev-$name" \
         --hook-order eltale_reborn,quest64_modern_gameplay,test_input,test_perf \
-        --mod "$nrm/quest64_modern_gameplay.nrm" --mod "source/1.1.3/eltale_reborn.nrm" --mod build/phase2/input --mod build/phase2/perf \
+        --mod "$nrm/quest64_modern_gameplay.nrm" --mod "$nrm/eltale_reborn.nrm" --mod build/phase2/input --mod build/phase2/perf \
         --sprint-button L --set "eltale_reborn.dev_scene=$setting" > /dev/null || exit 2
     echo "== $name"
     DEV_SCENE_NAME="$name" DEV_SCENE_POLLS="$polls" PERF_TARGET=eltale ELTALE_LAYOUT="build/rom/dev-$name/layout.json" \

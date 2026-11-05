@@ -26,10 +26,9 @@ SETTINGS ?=
 SPRINT   ?= D-UP
 ROM_DIR  := $(BUILD)/rom/$(subst $(comma),-,$(MODS))
 NRM_gameplay := vendor/Eltale-Reborn/mods/quest64_modern_gameplay.nrm
-# 1.1.3 has no upstream tag yet, so it comes from the gitignored source/ folder. Move back to the submodule once tagged.
-NRM_eltale   := source/1.1.3/eltale_reborn.nrm
+NRM_eltale   := vendor/Eltale-Reborn/mods/eltale_reborn.nrm
 
-.PHONY: phase1 test-phase1 phase2 test-phase2 test-rom-gameplay test-rom-vanilla test-rom-eltale test-phase3 test-phase4 perf-test-roms test-perf test-dl test-late test-combo test-glencoe test-sweep test-sprint test-glencoe-rom test-overscan perf-roms cart patch rom clean
+.PHONY: phase1 test-phase1 phase2 test-phase2 test-rom-gameplay test-rom-vanilla test-rom-eltale test-phase3 test-phase4 perf-test-roms test-perf test-dl test-late test-combo test-glencoe test-sweep test-sprint test-rowan test-glencoe-rom test-overscan perf-roms cart patch rom clean
 
 phase1: $(BUILD)/phase1.z64
 
@@ -147,6 +146,10 @@ test-glencoe-rom: $(BUILD)/phase2/input/mod_syms.bin $(BUILD)/phase2/perf/mod_sy
 # The sprint toggle: on and off in the field, ignored in menus.
 test-sprint: test-glencoe-rom
 	tests/run_sprint.sh
+
+# The new item's cure, on the same ROM.
+test-rowan: test-glencoe-rom
+	tests/run_rowan.sh
 
 # Every room's heaviest display list against the game's limit, using the ROM from test-glencoe.
 test-sweep: test-glencoe-rom

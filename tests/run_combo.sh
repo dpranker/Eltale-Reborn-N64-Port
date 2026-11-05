@@ -9,7 +9,7 @@ run() {
     name="$1"; shift
     python3 tools/build_rom.py --out "build/rom/dev-combo-$name" --name "dev-combo-$name" \
         --hook-order eltale_reborn,quest64_modern_gameplay,test_input,test_perf,test_combo \
-        --mod "$nrm/quest64_modern_gameplay.nrm" --mod "source/1.1.3/eltale_reborn.nrm" --mod build/phase2/input --mod build/phase2/perf --mod build/phase2/combo \
+        --mod "$nrm/quest64_modern_gameplay.nrm" --mod "$nrm/eltale_reborn.nrm" --mod build/phase2/input --mod build/phase2/perf --mod build/phase2/combo \
         --set eltale_reborn.jp_critical_hits=Off "$@" > /dev/null || exit 2
     echo "== options $name"
     PERF_TARGET=eltale ELTALE_LAYOUT="build/rom/dev-combo-$name/layout.json" tests/run_ares.sh \
