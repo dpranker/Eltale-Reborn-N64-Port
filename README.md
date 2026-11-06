@@ -4,7 +4,7 @@ Eltale Reborn: Holy Magic Century is a full reimagining of Quest 64, combining t
 
 This repository builds a version of [Eltale Reborn](https://github.com/billymonks/Eltale-Reborn) and Quest 64: Modern Gameplay that runs on a real Nintendo 64. It takes the same compiled mods as the PC version and patches them into the original ROM.
 
-This version was made in cooperation with Billy Monks. The hard work is his: Eltale Reborn and Modern Gameplay are his creations, and this repository only makes them run on N64 hardware.
+This version was made in cooperation with [billymonks](https://github.com/billymonks). The hard work is his: Eltale Reborn and Modern Gameplay are his creations, and this repository only makes them run on N64 hardware.
 
 Eltale Reborn is an independent, noncommercial fan modification. Not affiliated with or endorsed by Imagineer, SEGA, Nintendo, THQ, or Konami.
 
