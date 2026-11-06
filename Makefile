@@ -26,9 +26,8 @@ SETTINGS ?=
 SPRINT   ?= D-UP
 ROM_DIR  := $(BUILD)/rom/$(subst $(comma),-,$(MODS))
 NRM_gameplay := vendor/Eltale-Reborn/mods/quest64_modern_gameplay.nrm
-# Eltale internal 1.3.20 is newer than the 1.1.5 tag, so it comes from the gitignored source/ folder. Back to the
-# submodule once it's tagged. The test scripts read ELTALE_NRM.
-NRM_eltale   := source/1.3.20/eltale_reborn.nrm
+# The test scripts read ELTALE_NRM, so an untagged build from the author can be tested by pointing this at it.
+NRM_eltale   := vendor/Eltale-Reborn/mods/eltale_reborn.nrm
 export ELTALE_NRM := $(NRM_eltale)
 
 .PHONY: phase1 test-phase1 phase2 test-phase2 test-rom-gameplay test-rom-vanilla test-rom-eltale test-phase3 test-phase4 perf-test-roms test-perf test-dl test-late test-combo test-glencoe test-sweep test-sprint test-rowan test-glencoe-rom test-overscan perf-roms cart patch rom clean
@@ -165,7 +164,7 @@ perf-roms: $(BUILD)/phase2/perf_hud/mod_syms.bin
 		--mod $(NRM_gameplay) --mod $(NRM_eltale) --mod $(BUILD)/phase2/perf_hud --sprint-button $(SPRINT)
 
 # A BPS patch from the vanilla ROM to the real build. IPS can't address past 16 MB, where the mod image starts.
-PATCH := $(BUILD)/patch/eltale-n64-1.1.5-r1.3.20.bps
+PATCH := $(BUILD)/patch/eltale-reborn-n64-1.1.6.bps
 
 patch: rom
 	@mkdir -p $(BUILD)/patch
