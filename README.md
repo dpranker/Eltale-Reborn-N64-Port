@@ -16,7 +16,7 @@ The PC version is https://github.com/billymonks/Eltale-Reborn. The Dreamcast ver
 - A **Controller Pak** for saves.
 - A flash cart to run the patched ROM.
 
-Tested on ares and on an Analogue 3D with a SummerCart64.
+Tested on a real Nintendo 64, on an Analogue 3D with a SummerCart64, and in ares.
 
 ## Patch
 
@@ -83,3 +83,7 @@ Saves go to the Controller Pak, as in the original game.
 - [Quest 64: Recompiled](https://github.com/Rainchus/Quest64-Recomp) and its symbols.
 - [N64Recomp](https://github.com/N64Recomp/N64Recomp), for the mod format.
 - The Dreamcast version, for its mod file parsers.
+
+## License
+
+GPL-3.0, same as Quest 64: Recompiled and the Dreamcast version. See [COPYING](COPYING).
