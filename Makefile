@@ -1,4 +1,4 @@
-# Builds from the vanilla ROM to a patched ROM. See PLAN.md for the phases.
+# Builds from the vanilla ROM to a patched ROM. See README.md.
 
 ROM      := rom/quest64.us.z64
 BUILD    := build
