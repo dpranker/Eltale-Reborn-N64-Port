@@ -69,7 +69,7 @@ DEFAULT_SPRINT_BUTTON = "D-UP"
 RT64_OP_HALF = 0x6400
 G_NOOP_HALF = 0xC000
 RT64_COMMANDS = (0x6400002C, 0x6400000C)
-RT64_DATA_WORDS = {"eltale_reborn": (0x10E1BC,)}
+RT64_DATA_WORDS = {"eltale_reborn": (0x10E1CC,)}
 
 # Instructions changed for the N64, per mod version, each checked against what the mod has there. Any other word fails
 # the build, so a new version can't silently take a wrong patch.
@@ -78,11 +78,11 @@ RT64_DATA_WORDS = {"eltale_reborn": (0x10E1BC,)}
 # Coordinates sit at bit 14, so 1 off an upper half is 4 pixels left. The text's x is a plain immediate.
 CODE_WORDS = {
     "eltale_reborn": {
-        0x121368: (0x3C04F64E, 0x3C04F64D),  # fill rectangles' right edges: the outline and shadow, 314 and 312
-        0x121378: (0x3C06004E, 0x3C06004D),  # the same, for the right outline's left edge: 312 and 313
-        0x1213C0: (0x3C0A004C, 0x3C0A004B),  # left edges, as 304 minus the text's width
-        0x12147C: (0x3C18E44E, 0x3C18E44D),  # the background's right edge
-        0x1214E0: (0x24010134, 0x24010130),  # the text, 308 minus its width
+        0x121378: (0x3C04F64E, 0x3C04F64D),  # fill rectangles' right edges: the outline and shadow, 314 and 312
+        0x121388: (0x3C06004E, 0x3C06004D),  # the same, for the right outline's left edge: 312 and 313
+        0x1213D0: (0x3C0A004C, 0x3C0A004B),  # left edges, as 304 minus the text's width
+        0x12148C: (0x3C18E44E, 0x3C18E44D),  # the background's right edge
+        0x1214F0: (0x24010134, 0x24010130),  # the text, 308 minus its width
     },
 }
 
