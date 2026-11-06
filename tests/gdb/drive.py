@@ -70,6 +70,11 @@ def wait_polls(count):
     gdb.execute("delete", to_string=True)
 
 
+# Modern Gameplay 1.5.4's "Hold A to pass": with no enemy in reach, A has to be held a second to pass the turn. Held this
+# long, A passes or swings the way a tap did before.
+PASS_POLLS = 75
+
+
 def hold(buttons=0, stick=None, frames=1):
     write32(BUTTONS, buttons)
     write32(STICK, 0 if stick is None else ((stick[0] & 0xFF) << 8) | (stick[1] & 0xFF))

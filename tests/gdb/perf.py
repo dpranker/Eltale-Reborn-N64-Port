@@ -45,7 +45,7 @@ if TARGET == "eltale":
     while read16(BATTLE_STATE) & 1:
         write16(0x8007C998 + 0xA, 0)
         stay_alive()
-        hold(A, frames=3)
+        hold(A, frames=PASS_POLLS)
         wait_polls(30)
     set_flag(16)
     warp(0)

@@ -71,7 +71,7 @@ for i in range(120):
         write_float(PLAYER, ex + (bx - ex) / away * 15)
         write_float(PLAYER + 8, ez + (bz - ez) / away * 15)
     write_float(PLAYER + 0x10, math.atan2(ex - bx, ez - bz))
-    hold(A, frames=3)
+    hold(A, frames=PASS_POLLS)
     wait_polls(30)
     if i == 2:
         shot("p3_fight_" + TAG)

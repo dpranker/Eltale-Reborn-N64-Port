@@ -162,7 +162,7 @@ perf-roms: $(BUILD)/phase2/perf_hud/mod_syms.bin
 		--mod $(NRM_gameplay) --mod $(NRM_eltale) --mod $(BUILD)/phase2/perf_hud --sprint-button $(SPRINT)
 
 # A BPS patch from the vanilla ROM to the real build. IPS can't address past 16 MB, where the mod image starts.
-PATCH := $(BUILD)/patch/eltale-n64-1.1.3.bps
+PATCH := $(BUILD)/patch/eltale-n64-1.1.5.bps
 
 patch: rom
 	@mkdir -p $(BUILD)/patch
