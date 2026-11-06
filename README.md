@@ -18,7 +18,7 @@ The PC version is https://github.com/billymonks/Eltale-Reborn. The Dreamcast ver
 - A **Controller Pak** for saves.
 - A flash cart to run the patched ROM.
 
-Tested on a real Nintendo 64, on an Analogue 3D with a SummerCart64, and in ares.
+Tested with a SummerCart64 on a real Nintendo 64 and on an Analogue 3D, and in ares.
 
 The game drops frames in some busy scenes on stock hardware, as the original Quest 64 does. On an Analogue 3D, overclocking smooths these out well.
 
