@@ -48,6 +48,7 @@ PLAIN_IMPORTS = {
     "recomphook_get_return_u16": "rt_get_return_u16",
     "recomp_is_dependency_met": "rt_is_dependency_met",
     "recomp_get_smooth_transparency": "rt_smooth_transparency",
+    "recomp_set_original_camera": "rt_set_original_camera",
 }
 NATIVE_DEPENDENCY = "."
 
@@ -69,7 +70,7 @@ DEFAULT_SPRINT_BUTTON = "D-UP"
 RT64_OP_HALF = 0x6400
 G_NOOP_HALF = 0xC000
 RT64_COMMANDS = (0x6400002C, 0x6400000C)
-RT64_DATA_WORDS = {"eltale_reborn": (0x10E698,)}
+RT64_DATA_WORDS = {"eltale_reborn": (0x135454,)}
 
 # Instructions changed for the N64, per mod version, each checked against what the mod has there. Any other word fails
 # the build, so a new version can't silently take a wrong patch.
@@ -78,11 +79,11 @@ RT64_DATA_WORDS = {"eltale_reborn": (0x10E698,)}
 # Coordinates sit at bit 14, so 1 off an upper half is 4 pixels left. The text's x is a plain immediate.
 CODE_WORDS = {
     "eltale_reborn": {
-        0x1218EC: (0x3C04F64E, 0x3C04F64D),  # fill rectangles' right edges: the outline and shadow, 314 and 312
-        0x1218FC: (0x3C06004E, 0x3C06004D),  # the same, for the right outline's left edge: 312 and 313
-        0x121944: (0x3C0A004C, 0x3C0A004B),  # left edges, as 304 minus the text's width
-        0x121A00: (0x3C18E44E, 0x3C18E44D),  # the background's right edge
-        0x121A64: (0x24010134, 0x24010130),  # the text, 308 minus its width
+        0x14C2D4: (0x3C04F64E, 0x3C04F64D),  # fill rectangles' right edges: the outline and shadow, 314 and 312
+        0x14C2E4: (0x3C06004E, 0x3C06004D),  # the same, for the right outline's left edge: 312 and 313
+        0x14C32C: (0x3C0A004C, 0x3C0A004B),  # left edges, as 304 minus the text's width
+        0x14C3E8: (0x3C18E44E, 0x3C18E44D),  # the background's right edge
+        0x14C44C: (0x24010134, 0x24010130),  # the text, 308 minus its width
     },
 }
 

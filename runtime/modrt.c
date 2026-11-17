@@ -99,6 +99,12 @@ u32 rt_smooth_transparency(void) {
     return RT_SMOOTH_TRANSPARENCY;
 }
 
+// The PC's Modern camera hands control back to the original camera while this is set. The N64 only has the
+// original camera, so there's nothing to switch.
+void rt_set_original_camera(s32 on) {
+    (void)on;
+}
+
 void rt_printf(const char* format) {
     rt_printf_count++;
     rt_printf_last = format;
